@@ -13,16 +13,29 @@ client = OpenAI(
     api_key=os.getenv("OPEN_API_KEY")
 )
 
-def generate_questions(resume_data_json):
+def generate_questions(resume_data_json, focus_count):
     prompt = f"""You are a technical interviewer. Based on this resume, generate an interview question
-                Focused on any of the specific experiences, projects, skills, and relevant education. 
+                Focused on one SINGLE element/experience from their resume 
+
+                IMPORTANT RULES:
+                - Select EXACTLY 3 focus areas
+                - Prioritize focus areas that have been used LESS than 3 times
+                - Do NOT exceed 3 uses per focus area unless necessary
+                - Focus areas must come ONLY from the provided list
 
                 Resume:
                 {resume_data_json}
 
-                Include a question and a rationale in the format 
-                **Question:
-                **Rationale: """
+                Focus areas and current counts:
+                {focus_count}
+
+
+                MUST return JSON in this format:
+                {{
+                    "question": "...",
+                    "focus_areas": ["focus 1", "focus 2", "focus 3"]
+                }}
+                """
 
     for attempt in range(5):
         try:
@@ -39,18 +52,11 @@ def generate_questions(resume_data_json):
                 raise
 
 def question_to_json(question_txt):
-    pattern = r"\*\*Question:\*\*\s*(.*?)\s*\*\*Rationale:\*\*\s*(.*?)(?=\*\*Question:|$)"
-    
-    matches = re.findall(pattern, question_txt, re.DOTALL)
-    
-    result = []
-    for q, r in matches:
-        result.append({
-            "Question": q.strip(),
-            "Rationale": r.strip()
-        })
-    
-    return result
+    match = re.search(r"\{.*}", question_txt, re.DOTALL)
+    if not match:
+        return None
+    return json.loads(match.group(0))
+
 
 def generate_feedback(question_answer_json, question_json):
     prompt = f"""You are a technical interviewer. Based on this question and it's rational, generate an interview question
