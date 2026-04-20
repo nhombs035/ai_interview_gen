@@ -94,13 +94,29 @@ if "stage" not in st.session_state:
 
     st.session_state.total_q = 0
 
+    st.session_state.q_cur = 0
+
 
 
 ## PAGE SET UP
+with st.sidebar:
+    col1, col2, col3 = st.columns(3)
 
-if st.sidebar.button ("Restart Interview"):
-    st.session_state.clear()
-    st.rerun()
+    with col1:
+        if st.button ("Previous"):
+            st.session_state.q_cur = max(st.session_state.q_cur - 1 , 0)
+            st.rerun()
+
+    with col2:
+        if st.button ("Restart"):
+            st.session_state.clear()
+            st.rerun()
+        
+    with col3:
+        max_q_idx = len(st.session_state.history) - 1
+        if st.button ("Next"):
+            st.session_state.q_cur = min(st.session_state.q_cur + 1 , max_q_idx)
+            st.rerun()
 
 st.sidebar.divider()
 
@@ -108,7 +124,7 @@ st.title("Interview Simulator Practice")
 
 ## add stats and sidebar menu
 st.sidebar.title("Interview Progress: ")
-st.sidebar.write("You have reached " + str(st.session_state.total_q) + " out of 10 available questions" )
+st.sidebar.write("You have answered " + str(st.session_state.total_q) + " out of 10 interview questions" )
 percent = st.session_state.total_q/10
 st.sidebar.progress(percent)
 
@@ -118,59 +134,69 @@ st.sidebar.title("Focus Area Progress: ")
 for topic, progress in st.session_state.topic_list.items():
     st.sidebar.write(topic)
     percent = progress/3 
+    if percent >= 1:
+        percent = 0.999999
     st.sidebar.progress(percent)
 
 
 ## PRINT CONVO
-for item in st.session_state.history:
-    
-    if item["role"] == "feedback":
-        st.chat_message("assistant").write("Thank you for your response! Grading and providing feedback now!")
-        feedback_json = item["content"]
 
-        st.session_state.scores = feedback_json["scores"]
-        st.session_state.focus_scores = feedback_json["focus_areas"]
+# start = st.session_state.q_cur * 4
+# end = start + 4
 
-        st.write("TOTAL SCORE: " + str(sum(st.session_state.scores)) + "/40")
-        st.progress( sum(st.session_state.scores) / 40)
+if len(st.session_state.history) != 0 and st.session_state.stage != "question":
+    history = st.session_state.history[st.session_state.q_cur]
 
-        st.write("\n")
+    for item in history:
+        
+        if item["role"] == "feedback" and item["content"] is not None:
+            st.chat_message("assistant").write("Thank you for your response! Grading and providing feedback now!")
+            feedback_json = item["content"]
 
-        cols1 = st.columns(2)
-        for i in range(2):
-            with cols1[i]:
-                progress = st.session_state.scores[i]
-                st.write(RUBRIC_AREAS[i] + ": " + str(progress) + "/10")
-                percent = progress/10
-                st.progress(percent)
+            st.session_state.scores = feedback_json["scores"]
+            st.session_state.focus_scores = feedback_json["focus_areas"]
 
-        cols2 = st.columns(2)
-        for i in range(2):
-            with cols2[i]:
-                idx = i + 2
-                progress = st.session_state.scores[idx]
-                st.write(RUBRIC_AREAS[idx] + ": " + str(progress) + "/10")
-                percent = progress/10
-                st.progress(percent)
+            st.write("TOTAL SCORE: " + str(sum(st.session_state.scores)) + "/40")
+            st.progress( sum(st.session_state.scores) / 40)
 
-        st.write("\n")
+            st.write("\n")
 
-        for item in st.session_state.focus_scores:
-            st.write(f"- {item}")
+            cols1 = st.columns(2)
+            for i in range(2):
+                with cols1[i]:
+                    progress = st.session_state.scores[i]
+                    st.write(RUBRIC_AREAS[i] + ": " + str(progress) + "/10")
+                    percent = progress/10
+                    st.progress(percent)
 
-        st.write("\n")
+            cols2 = st.columns(2)
+            for i in range(2):
+                with cols2[i]:
+                    idx = i + 2
+                    progress = st.session_state.scores[idx]
+                    st.write(RUBRIC_AREAS[idx] + ": " + str(progress) + "/10")
+                    percent = progress/10
+                    st.progress(percent)
 
-    elif item["role"] == "focus":
-        focus_tags_disp(item["content"])
-        st.divider()
+            st.write("\n")
 
+            for item in st.session_state.focus_scores:
+                st.write(f"- {item}")
 
-    else: 
-        with st.chat_message(item["role"]):
-            st.markdown(item["content"])
+            st.write("\n")
 
-        if (item["role"]) == "user":
+        elif item["role"] == "focus":
+            focus_tags_disp(item["content"])
             st.divider()
+
+
+        else: 
+            if item["content"] is not None:
+                with st.chat_message(item["role"]):
+                    st.markdown(item["content"])
+
+                if (item["role"]) == "user":
+                    st.divider()
     
 ################################# STATES #######################################
 
@@ -203,7 +229,6 @@ if st.session_state.stage == "upload":
             st.rerun()
 
 elif st.session_state.stage == "question":
-    st.session_state.total_q += 1
 
     question = generate_questions(st.session_state.json_str, st.session_state.topic_list, st.session_state.q_history)
     
@@ -213,12 +238,14 @@ elif st.session_state.stage == "question":
     st.session_state.question = st.session_state.question_json["question"]
     st.session_state.focus = st.session_state.question_json["focus_areas"]
 
-
     # st.write("DEBUG:", st.session_state.question_json)
     # st.write("TYPE:", type(st.session_state.question_json))
 
-    st.session_state.history.append({"role": "assistant", "content": st.session_state.question})
-    st.session_state.history.append({"role": "focus", "content": st.session_state.focus})
+    st.session_state.history.append([{"role": "assistant", "content": st.session_state.question},
+                                     {"role": "focus", "content": st.session_state.focus},
+                                     {"role": "user", "content": None},
+                                     {"role": "feedback", "content": None}])
+    
     st.session_state.q_history.append(st.session_state.question)
 
     st.session_state.stage = "answer"
@@ -226,28 +253,35 @@ elif st.session_state.stage == "question":
  
 
 elif st.session_state.stage == "answer":
-    if answer := st.chat_input("Provide your best answer to the following question:"):
-        st.session_state.answer = answer
-        st.session_state.answer_json = json.dumps(answer, indent=4)
 
-        st.session_state.history.append({"role": "user", "content": st.session_state.answer})
-        
+    if st.session_state.history[st.session_state.q_cur][2]["content"] is None:
+        if answer := st.chat_input("Provide your best answer to the following question:"):
+            st.session_state.total_q += 1
+            st.session_state.answer = answer
+            st.session_state.answer_json = json.dumps(answer, indent=4)
 
-        for focus in st.session_state.focus:
-            if focus in st.session_state.topic_list:
-                st.session_state.topic_list[focus] += 1
 
-        st.session_state.stage = "feedback"
-        st.rerun()
+            
+            st.session_state.history[st.session_state.q_cur][2]["content"] = st.session_state.answer
+            
+            for focus in st.session_state.focus:
+                if focus in st.session_state.topic_list:
+                    if st.session_state.topic_list[focus] < 3:
+                        st.session_state.topic_list[focus] += 1
+
+            st.session_state.stage = "feedback"
+            st.rerun()
 
 
 elif st.session_state.stage == "feedback":
     feedback = generate_feedback(st.session_state.answer_json, st.session_state.question_json, RUBRIC_AREAS, st.session_state.focus)
     print(feedback)
     
-    st.feedback_to_json = to_json(feedback)
+    st.session_state.feedback_to_json = to_json(feedback)
 
-    st.session_state.history.append({"role": "feedback", "content":st.feedback_to_json})
+    st.session_state.history[st.session_state.q_cur][3]["content"] = st.session_state.feedback_to_json
+    
+    # st.session_state.history.append({"role": "feedback", "content":st.feedback_to_json})
     st.session_state.stage =  "wait"
 
     st.rerun()
@@ -256,4 +290,5 @@ elif st.session_state.stage == "feedback":
 elif st.session_state.stage == "wait":
     if st.button("Got it!! Next Question!", use_container_width=True):
         st.session_state.stage = "question"
+        st.session_state.q_cur += 1
         st.rerun()

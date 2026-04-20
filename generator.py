@@ -18,9 +18,9 @@ def generate_questions(resume_data_json, focus_count, past_questions_list):
                 Focused on one SINGLE element/experience from their resume 
 
                 IMPORTANT RULES:
+                - Whatever you do, DO NOT exceed 3 uses per focus area for current counts. If the current count is 3, do not use that focus area
                 - Select EXACTLY 3 focus areas
                 - Prioritize focus areas that have been used LESS than 3 times
-                - Do NOT exceed 3 uses per focus area
                 - Focus areas must come ONLY from the provided list
                 - Try not to ask repeated/related questions to those that were already asked
 
