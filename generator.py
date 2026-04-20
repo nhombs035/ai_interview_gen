@@ -51,16 +51,30 @@ def generate_questions(resume_data_json, focus_count):
             else:
                 raise
 
-def question_to_json(question_txt):
-    match = re.search(r"\{.*}", question_txt, re.DOTALL)
+def to_json(txt):
+    match = re.search(r"\{.*}", txt, re.DOTALL)
     if not match:
         return None
     return json.loads(match.group(0))
 
 
-def generate_feedback(question_answer_json, question_json):
-    prompt = f"""You are a technical interviewer. Based on this question and it's rational, generate an interview question
-                feedback. 
+def generate_feedback(question_answer_json, question_json, rubric_areas, focus_areas):
+    prompt = f"""You are a senior technical interviewer. Evaluate the canidates answer using the following crieteria
+
+                SCORING INSTRUCTIONS:
+                - score each rubric area from 0 to 10 (ints only)
+                - be VERY strict and consistent 
+                - do not give all high scores unless clearly justified
+
+                FOCUS AREA FEEDBACK INSTRUCTIONS:
+                - give feedback to the interviewe about their answers
+                - specifically give feedback about how they met the focus areas
+                - allways mention something they did well and how they can improve
+                - use "you" and other nouns like that. like you are directly talking to them
+                - keep it 1 sentence that is max 40 words
+
+                Rubric Areas:
+                {rubric_areas}
 
                 Question:
                 {question_json}
@@ -68,7 +82,15 @@ def generate_feedback(question_answer_json, question_json):
                 Answer:
                 {question_answer_json}
 
-                Include structured feedback and score out of 10."""
+                Focus Areas:
+                {focus_areas}
+
+                MUST return JSON in this format:
+                {{
+                    "scores": [score 1, score 2, score 3, score 4, score 5],
+                    "focus_areas": ["feedback bullet for focus area 1", "feedback bullet for focus area 2", "feedback bullet for focus area 3"]
+                }}
+                """
     for attempt in range(5):
         try:
             response = client.chat.completions.create(
