@@ -99,6 +99,55 @@ if "stage" not in st.session_state:
 
 st.title("Interview Simulator Practice")
 
+if st.session_state.total_q == 2:
+    st.title("You have completed the interview!")
+    st.write("Here are your final performance statistics")
+
+    st.session_state.stage = "done"
+    st.session_state.q_history = []
+    st.session_state.history = []
+
+    total_scores = st.session_state.total_scores[0:st.session_state.total_q + 1]
+
+    avg = []
+    for i in range(4):
+        col_sum = sum(row[i] for row in total_scores)
+        avg.append(col_sum / len(total_scores))
+    
+    total_avg = 0
+    for i in total_scores:
+        total_avg += sum(i)
+    total_avg /= (len(total_scores))
+    percent_2 = total_avg/40
+    
+    st.write("TOTAL AVERAGE SCORE: " + str(int(percent_2)) + "/40")
+    st.progress( sum(st.session_state.scores) / 40)
+
+    st.write("\n")
+
+    cols1 = st.columns(2)
+    for i in range(2):
+        with cols1[i]:
+            progress = avg[i]
+            st.write(RUBRIC_AREAS[i] + ": " + str(int(progress)) + "/10")
+            percent = progress/10
+            st.progress(percent)
+
+    cols2 = st.columns(2)
+    for i in range(2):
+        with cols2[i]:
+            idx = i + 2
+            progress = avg[idx]
+            st.write(RUBRIC_AREAS[idx] + ": " + str(int(progress)) + "/10")
+            percent = progress/10
+            st.progress(percent)
+    
+    st.divider()
+
+    if st.button ("Restart Interview Session"):
+        st.session_state.clear()
+        st.rerun()
+
 ## PRINT CONVO
 
 # start = st.session_state.q_cur * 4
