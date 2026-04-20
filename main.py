@@ -99,7 +99,7 @@ if "stage" not in st.session_state:
 
 st.title("Interview Simulator Practice")
 
-if st.session_state.total_q == 2:
+if st.session_state.total_q == 10:
     st.title("You have completed the interview!")
     st.write("Here are your final performance statistics")
 
