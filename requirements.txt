@@ -1,0 +1,12 @@
+openai
+pdfplumber
+python-docx
+python-dotenv
+streamlit
+sys 
+json 
+tempfile
+time
+os
+re
+docx
