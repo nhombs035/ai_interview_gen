@@ -73,7 +73,7 @@ def generate_feedback(question_answer_json, question_json, rubric_areas, focus_a
                 FOCUS AREA FEEDBACK INSTRUCTIONS:
                 - give feedback to the interviewe about their answers
                 - specifically give feedback about how they met the focus areas
-                - allways mention something they did well and how they can improve
+                - allways mention something they did well and soemthing they didnt
                 - use "you" and other nouns like that. like you are directly talking to them
                 - keep it 1 sentence that is max 40 words
 

@@ -85,6 +85,7 @@ if "stage" not in st.session_state:
     st.session_state.feedback_to_json = ""
     st.session_state.scores = []
     st.session_state.focus_scores = []
+    st.session_state.total_scores = []
 
     st.session_state.q_history = []
 
@@ -96,48 +97,7 @@ if "stage" not in st.session_state:
 
     st.session_state.q_cur = 0
 
-
-
-## PAGE SET UP
-with st.sidebar:
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        if st.button ("Previous"):
-            st.session_state.q_cur = max(st.session_state.q_cur - 1 , 0)
-            st.rerun()
-
-    with col2:
-        if st.button ("Restart"):
-            st.session_state.clear()
-            st.rerun()
-        
-    with col3:
-        max_q_idx = len(st.session_state.history) - 1
-        if st.button ("Next"):
-            st.session_state.q_cur = min(st.session_state.q_cur + 1 , max_q_idx)
-            st.rerun()
-
-st.sidebar.divider()
-
 st.title("Interview Simulator Practice")
-
-## add stats and sidebar menu
-st.sidebar.title("Interview Progress: ")
-st.sidebar.write("You have answered " + str(st.session_state.total_q) + " out of 10 interview questions" )
-percent = st.session_state.total_q/10
-st.sidebar.progress(percent)
-
-st.sidebar.title("Performance Stats: ")
-
-st.sidebar.title("Focus Area Progress: ")
-for topic, progress in st.session_state.topic_list.items():
-    st.sidebar.write(topic)
-    percent = progress/3 
-    if percent >= 1:
-        percent = 0.999999
-    st.sidebar.progress(percent)
-
 
 ## PRINT CONVO
 
@@ -145,6 +105,7 @@ for topic, progress in st.session_state.topic_list.items():
 # end = start + 4
 
 if len(st.session_state.history) != 0 and st.session_state.stage != "question":
+    st.title("Question " + str(st.session_state.q_cur + 1))
     history = st.session_state.history[st.session_state.q_cur]
 
     for item in history:
@@ -197,6 +158,90 @@ if len(st.session_state.history) != 0 and st.session_state.stage != "question":
 
                 if (item["role"]) == "user":
                     st.divider()
+
+## PAGE SET UP
+with st.sidebar:
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        if st.button ("Previous"):
+            st.session_state.q_cur = max(st.session_state.q_cur - 1 , 0)
+            st.rerun()
+
+    with col2:
+        if st.button ("Restart"):
+            st.session_state.clear()
+            st.rerun()
+        
+    with col3:
+        max_q_idx = len(st.session_state.history) - 1
+        if st.button ("Next"):
+            st.session_state.q_cur = min(st.session_state.q_cur + 1 , max_q_idx)
+            st.rerun()
+
+st.sidebar.divider()
+
+
+## add stats and sidebar menu
+st.sidebar.title("Interview Progress: ")
+st.sidebar.write("You have answered " + str(st.session_state.total_q) + " out of 10 interview questions" )
+percent = st.session_state.total_q/10
+st.sidebar.progress(percent)
+
+st.sidebar.title("Performance Stats: ")
+
+if len(st.session_state.total_scores) != 0:
+
+    total_scores = st.session_state.total_scores[0:st.session_state.total_q + 1]
+    avg = []
+    for i in range(4):
+        col_sum = sum(row[i] for row in total_scores)
+        avg.append(col_sum / len(total_scores))
+    
+    total_avg = 0
+    for i in total_scores:
+        total_avg += sum(i)
+    total_avg /= (len(total_scores))
+    percent_2 = total_avg/40
+
+else:
+    avg = [0, 0, 0, 0]
+    total_avg = 0
+    percent_2 = 0
+
+st.sidebar.write("Total Score Average: " + str(int(total_avg)) + "/40")
+st.sidebar.progress(percent_2)
+
+
+with st.sidebar:
+    cols1 = st.columns(2)
+    for i in range(2):
+        with cols1[i]:
+            progress = avg[i]
+            st.write(RUBRIC_AREAS[i] + " Average: " + str(int(progress)) + "/10")
+            percent = progress/10
+            st.progress(percent)
+
+    cols2 = st.columns(2)
+    for i in range(2):
+        with cols2[i]:
+            idx = i + 2
+            progress = avg[idx]
+            st.write(RUBRIC_AREAS[idx] + " Average: " + str(int(progress)) + "/10")
+            percent = progress/10
+            st.progress(percent)
+
+
+st.sidebar.title("Focus Area Progress: ")
+for topic, progress in st.session_state.topic_list.items():
+    st.sidebar.write(topic)
+    percent = progress/3 
+    if percent >= 1:
+        percent = 0.999999
+    st.sidebar.progress(percent)
+
+
+
     
 ################################# STATES #######################################
 
@@ -278,7 +323,8 @@ elif st.session_state.stage == "feedback":
     print(feedback)
     
     st.session_state.feedback_to_json = to_json(feedback)
-
+    scores = st.session_state.feedback_to_json["scores"]
+    st.session_state.total_scores.append(scores)
     st.session_state.history[st.session_state.q_cur][3]["content"] = st.session_state.feedback_to_json
     
     # st.session_state.history.append({"role": "feedback", "content":st.feedback_to_json})
