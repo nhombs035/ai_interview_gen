@@ -13,21 +13,25 @@ client = OpenAI(
     api_key=os.getenv("OPEN_API_KEY")
 )
 
-def generate_questions(resume_data_json, focus_count):
+def generate_questions(resume_data_json, focus_count, past_questions_list):
     prompt = f"""You are a technical interviewer. Based on this resume, generate an interview question
                 Focused on one SINGLE element/experience from their resume 
 
                 IMPORTANT RULES:
                 - Select EXACTLY 3 focus areas
                 - Prioritize focus areas that have been used LESS than 3 times
-                - Do NOT exceed 3 uses per focus area unless necessary
+                - Do NOT exceed 3 uses per focus area
                 - Focus areas must come ONLY from the provided list
+                - Try not to ask repeated/related questions to those that were already asked
 
                 Resume:
                 {resume_data_json}
 
                 Focus areas and current counts:
                 {focus_count}
+
+                Past Questions List:
+                {past_questions_list}
 
 
                 MUST return JSON in this format:

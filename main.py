@@ -86,6 +86,8 @@ if "stage" not in st.session_state:
     st.session_state.scores = []
     st.session_state.focus_scores = []
 
+    st.session_state.q_history = []
+
     st.session_state.history = []
     st.session_state.pending = None
     st.session_state.validation = {}
@@ -203,7 +205,7 @@ if st.session_state.stage == "upload":
 elif st.session_state.stage == "question":
     st.session_state.total_q += 1
 
-    question = generate_questions(st.session_state.json_str, st.session_state.topic_list)
+    question = generate_questions(st.session_state.json_str, st.session_state.topic_list, st.session_state.q_history)
     
     print(question)
 
@@ -216,9 +218,8 @@ elif st.session_state.stage == "question":
     # st.write("TYPE:", type(st.session_state.question_json))
 
     st.session_state.history.append({"role": "assistant", "content": st.session_state.question})
-    
     st.session_state.history.append({"role": "focus", "content": st.session_state.focus})
-    
+    st.session_state.q_history.append(st.session_state.question)
 
     st.session_state.stage = "answer"
     st.rerun()
