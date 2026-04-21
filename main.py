@@ -120,7 +120,7 @@ if st.session_state.total_q == 10:
     total_avg /= (len(total_scores))
     percent_2 = total_avg/40
     
-    st.write("TOTAL AVERAGE SCORE: " + str(int(percent_2)) + "/40")
+    st.write("TOTAL AVERAGE SCORE: " + str(int(total_avg)) + "/40")
     st.progress( sum(st.session_state.scores) / 40)
 
     st.write("\n")
