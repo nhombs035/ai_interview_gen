@@ -3,7 +3,7 @@
 ## Clone Repository 
 To clone repository: `git clone https://github.com/nhombs035/ai_interview_gen.git
 
-AcCess repository in your directory: `cd ai_interview_gen`
+Access repository in your directory: `cd ai_interview_gen`
 
 ## Create a Virtual Environment 
 To create a virtual environment: `python -m venv venv`
