@@ -164,7 +164,6 @@ if st.session_state.total_q == 10: # marks end of interview
 ########### In session page (default page)
 if len(st.session_state.history) != 0 and st.session_state.stage != "question":
 
-    # print conversation hsitory (refreshed with each state update so have to reprint)
     st.title("Question " + str(st.session_state.q_cur + 1))
     history = st.session_state.history[st.session_state.q_cur]
 
@@ -302,7 +301,6 @@ for topic, progress in st.session_state.topic_list.items():
 # start of interivew resume upload state 
 if st.session_state.stage == "upload":
 
-    print("file is being read...")
     file_object = st.file_uploader("Please select an input resume: ")
 
     file_path = ""
@@ -316,13 +314,11 @@ if st.session_state.stage == "upload":
             parsed_text = parse_resume(file_path)
             st.write("Resume Successfully Uploaded!")
             time.sleep(1)
-            # print(parsed_text)
             st.session_state.json_str = json.dumps(parsed_text, indent=4)
 
             st.write("Resume is being read...")
             time.sleep(1)
             st.write("Please wait while we generate questions...")
-            print("file is read. \nquesions being generated...")
 
             st.session_state.stage = "question"
             st.rerun()
