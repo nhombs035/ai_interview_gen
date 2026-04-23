@@ -49,6 +49,19 @@ def generate_questions(resume_data_json, focus_count, past_questions_list):
                     "focus_areas": ["focus 1", "focus 2", "focus 3"]
                 }}
                 """
+    for attempt in range(5):
+        try:
+            response = client.chat.completions.create(
+                        model="google/gemini-2.0-flash-lite-001",
+                        messages = [{"role": "user", "content": prompt}]
+                        )
+            return response.choices[0].message.content
+        except RateLimitError:
+            if attempt < 4:
+                print(f"Rate limited, retrying in {10 * (attempt + 1)}s...")
+                time.sleep(10 * (attempt + 1))
+            else:
+                raise
 
 # generate answer feedback
 def generate_feedback(question_answer_json, question_json, rubric_areas, focus_areas):
@@ -84,3 +97,16 @@ def generate_feedback(question_answer_json, question_json, rubric_areas, focus_a
                     "focus_areas": ["feedback bullet for focus area 1", "feedback bullet for focus area 2", "feedback bullet for focus area 3"]
                 }}
                 """
+    for attempt in range(5):
+        try:
+            response = client.chat.completions.create(
+                        model="google/gemini-2.0-flash-lite-001",
+                        messages = [{"role": "user", "content": prompt}]
+                        )
+            return response.choices[0].message.content
+        except RateLimitError:
+            if attempt < 4:
+                print(f"Rate limited, retrying in {10 * (attempt + 1)}s...")
+                time.sleep(10 * (attempt + 1))
+            else:
+                raise
