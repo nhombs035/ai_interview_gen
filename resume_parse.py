@@ -3,7 +3,6 @@ import docx
 import json
 import sys
 import re
-# import spacy
 
 ##### Extract Text Functions ########
 
@@ -57,42 +56,17 @@ def extract_sections(text):
 
     return sections
 
-
+# parse experience headers
 def parse_title_line(title_line):
-    date_match = re.search(
-        r'((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s\d{4}\s*-\s*(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|Present)\s?\d{0,4}|Present)$',
-        title_line, re.IGNORECASE)
-    dates = date_match.group(1).strip() if date_match else ""
-    line_no_dates = title_line.replace(dates, "").strip()
-    if " - " in line_no_dates:
-        parts = line_no_dates.split(" - ", 1)
-    elif "-" in line_no_dates:
-        parts = line_no_dates.split("-", 1)
+    if " - " in title_line:
+        parts = title_line.split(" - ", 1)
+    elif "-" in title_line:
+        parts = title_line.split("-", 1)
     else:
-        parts = [line_no_dates, ""]
+        parts = [title_line, ""]
     position = parts[0].strip()
     company = parts[1].strip() if len(parts) > 1 else ""
-    return {"position": position, "company": company, "dates": dates}
-
-# extract resume info email
-def extract_email(text):
-    match = re.search(r'\b[\w.-]+@[\w.-]+\.\w{2,4}\b', text)
-    return match.group(0) if match else None
-
-# extract resume info phone number
-def extract_phone(text):
-    phone_pattern = re.compile(
-        r'(\+?\d{1,2}[\s\-\.]?)?'        # optional country code
-        r'(\(?\d{3}\)?[\s\-\.]?)'        # area code with optional parentheses
-        r'\d{3}[\s\-\.]?\d{4}'           # 7-digit number
-    )
-    match = phone_pattern.search(text)
-    return match.group(0) if match else None
-
-# extract resume info full name 
-def extract_name(text):
-    return text.strip().split("\n")[0]
-
+    return {"position": position, "company": company}
 
 ###### Parse/ Format text #######
 def normalize_text(text):
@@ -114,8 +88,10 @@ def split_entries(text):
         line = line.strip()
         if not line:
             continue
+        # if body text 
         if line.startswith("\u25cf") and current_entry:
             current_entry["details"].append(line[1:].strip())
+        # if title line
         else:
             if current_entry:
                 entries.append(current_entry)
@@ -123,7 +99,7 @@ def split_entries(text):
             parsed = parse_title_line(line)
             parsed["details"] = []
             current_entry = parsed
-
+    # add to most recent entry 
     if current_entry:
         entries.append(current_entry)
     
@@ -139,19 +115,7 @@ def parse_resume(file_path):
         raise ValueError("Unsuported Resume File Type")
     
     data = {
-        "name": extract_name(text),
-        "email": extract_email(text),
-        "phone": extract_phone(text),
         "sections": extract_sections(text)
     }
     return data
  
-if __name__ == "__main__":
-    # nlp = spacy.load("en_core_web_sm")
-    file_path = sys.argv[1]
-    parsed_text = parse_resume(file_path)
-    print(parsed_text)
-    json_str = json.dumps(parsed_text, indent=4)
-    with open("sample.json", "w") as f:
-        f.write(json_str)
-
